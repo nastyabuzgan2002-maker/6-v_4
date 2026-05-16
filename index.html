@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Станция: Навигация по городу</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#eef3ff;
+    text-align:center;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    width:1100px;
+    max-width:95%;
+    margin:auto;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.info{
+    background:#f8f9ff;
+    padding:15px;
+    border-radius:10px;
+    margin:20px 0;
+    text-align:left;
+    line-height:1.6;
+}
+
+/* КОЛОНКА */
+#places{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    margin-top:20px;
+}
+
+.place{
+    width:260px;
+    background:#fafbff;
+    border:2px solid #ddd;
+    border-radius:12px;
+    padding:12px;
+    user-select:none;
+    touch-action:none;
+    transition:0.2s ease;
+}
+
+.place.active{
+    opacity:0.6;
+    transform:scale(1.03);
+}
+
+.number{
+    font-size:22px;
+    font-weight:bold;
+    color:#4a6cf7;
+    margin-top:10px;
+}
+
+button{
+    margin-top:25px;
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:#4a6cf7;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+}
+
+#result{
+    margin-top:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.code{
+    margin-top:10px;
+    font-size:20px;
+    font-weight:bold;
+    color:green;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>🗺️ Станция: Навигация по городу</h2>
+
+<div class="info">
+На карте города возле каждой достопримечательности указан код в виде десятичного числа. Чтобы навигатор построил правильный маршрут, нужно расположить карточки в порядке возрастания.
+</div>
+
+<div id="places">
+
+    <div class="place" data-value="0.2">
+        🏰 Крепость
+        <div class="number">0,2</div>
+    </div>
+
+    <div class="place" data-value="0.19">
+        🌉 Мост
+        <div class="number">0,19</div>
+    </div>
+
+    <div class="place" data-value="1.15">
+        🎡 Парк
+        <div class="number">1,15</div>
+    </div>
+
+    <div class="place" data-value="1.2">
+        🎨 Музей
+        <div class="number">1,2</div>
+    </div>
+
+    <div class="place" data-value="0.05">
+        ⛲ Фонтан
+        <div class="number">0,05</div>
+    </div>
+
+</div>
+
+<button onclick="check()">Проверить</button>
+
+<div id="result"></div>
+<div id="code" class="code"></div>
+
+</div>
+
+<script>
+
+const container = document.getElementById("places");
+let dragged = null;
+
+/* ====== ПЕРЕТАСКИВАНИЕ (телефон + ПК) ====== */
+
+document.querySelectorAll(".place").forEach(item => {
+
+    item.addEventListener("pointerdown", (e) => {
+        dragged = item;
+        item.classList.add("active");
+        item.setPointerCapture(e.pointerId);
+    });
+
+    item.addEventListener("pointermove", (e) => {
+        if (!dragged) return;
+
+        const after = getAfterElement(container, e.clientY);
+
+        if (after == null) {
+            container.appendChild(dragged);
+        } else {
+            container.insertBefore(dragged, after);
+        }
+    });
+
+    item.addEventListener("pointerup", () => {
+        if (dragged) {
+            dragged.classList.remove("active");
+        }
+        dragged = null;
+    });
+
+});
+
+/* ====== ЛОГИКА ВСТАВКИ ====== */
+function getAfterElement(container, y) {
+    const items = [...container.querySelectorAll(".place:not(.active)")];
+
+    return items.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+/* ====== ПРОВЕРКА ====== */
+function check(){
+    let items = [...document.querySelectorAll(".place")];
+    let values = items.map(i => parseFloat(i.dataset.value));
+    let sorted = [...values].sort((a,b)=>a-b);
+
+    if(JSON.stringify(values) === JSON.stringify(sorted)){
+        document.getElementById("result").innerText = "✔ Верно!";
+        document.getElementById("code").innerText = "🔐 Код: то";
+    } else {
+        document.getElementById("result").innerText = "❌ Неверно, попробуй ещё раз";
+        document.getElementById("code").innerText = "";
+    }
+}
+
+</script>
+
+</body>
+</html>
